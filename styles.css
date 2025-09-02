@@ -25,7 +25,7 @@ h1, h2 {
     align-items: center;
 }
 
-select {
+select, input {
     padding: 10px;
     font-size: 16px;
     border: 1px solid #4a5678;
@@ -34,7 +34,7 @@ select {
     color: #d4d9e6;
 }
 
-select:focus {
+select:focus, input:focus {
     outline: none;
     border-color: #64b5f6;
     box-shadow: 0 0 5px rgba(100, 181, 246, 0.5);
@@ -74,18 +74,28 @@ select:focus {
     display: none;
 }
 
-.back-button, .raw-text-button {
+.back-button, .raw-text-button, .page-button {
     padding: 10px 20px;
     background-color: #64b5f6;
     color: #fff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin: 10px 0;
+    margin: 10px 5px;
 }
 
-.back-button:hover, .raw-text-button:hover {
+.back-button:hover, .raw-text-button:hover, .page-button:hover {
     background-color: #4a90e2;
+}
+
+.page-button:disabled {
+    background-color: #4a5678;
+    cursor: not-allowed;
+}
+
+.pagination {
+    text-align: center;
+    margin-top: 20px;
 }
 
 #lesson-content, #raw-text {

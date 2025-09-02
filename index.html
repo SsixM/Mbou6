@@ -34,9 +34,16 @@
                     <option value="week">Эта неделя</option>
                     <option value="month">Этот месяц</option>
                     <option value="lastMonth">Прошлый месяц</option>
+                    <option value="specific">Конкретная дата</option>
                 </select>
+                <input type="date" id="specificDate" class="hidden">
             </div>
             <div class="lessons" id="lessons"></div>
+            <div class="pagination">
+                <button id="prevPage" class="page-button" disabled>← Предыдущая</button>
+                <span id="pageInfo"></span>
+                <button id="nextPage" class="page-button">Следующая →</button>
+            </div>
         </div>
         <div id="lesson-page" class="hidden">
             <button id="back-button" class="back-button">← Назад</button>
@@ -52,41 +59,52 @@
 
     <script>
         let lessons = [];
+        let currentPage = 1;
+        const lessonsPerPage = 50;
 
         // Загрузка уроков из JSON
         fetch('lessons.json')
             .then(response => response.json())
             .then(data => {
                 lessons = data;
-                renderLessons(lessons);
+                filterLessons();
             })
             .catch(error => console.error('Ошибка загрузки уроков:', error));
 
         function renderLessons(filteredLessons) {
             const lessonsContainer = document.getElementById('lessons');
             lessonsContainer.innerHTML = '';
-            filteredLessons.forEach((lesson, index) => {
+            const start = (currentPage - 1) * lessonsPerPage;
+            const end = start + lessonsPerPage;
+            const paginatedLessons = filteredLessons.slice(start, end);
+
+            paginatedLessons.forEach((lesson, index) => {
                 const card = document.createElement('div');
                 card.className = 'lesson-card';
-                card.dataset.index = index;
+                card.dataset.index = start + index;
                 card.innerHTML = `
                     <h3>${lesson.title}</h3>
                     <p>Предмет: ${lesson.subject}</p>
                     <p>Дата: ${lesson.date}</p>
                     <p>${lesson.description}</p>
                 `;
-                card.addEventListener('click', () => showLesson(index));
+                card.addEventListener('click', () => showLesson(start + index));
                 lessonsContainer.appendChild(card);
             });
+
+            const totalPages = Math.ceil(filteredLessons.length / lessonsPerPage);
+            document.getElementById('pageInfo').textContent = `Страница ${currentPage} из ${totalPages}`;
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
         }
 
         function filterLessons() {
             const subject = document.getElementById('subjectFilter').value;
             const dateFilter = document.getElementById('dateFilter').value;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const specificDate = document.getElementById('specificDate').value;
+            const today = new Date('2025-09-02');
 
-            const filtered = lessons.filter(lesson => {
+            let filtered = lessons.filter(lesson => {
                 const matchSubject = subject === 'all' || lesson.subject === subject;
                 const lessonDate = new Date(lesson.date);
                 let matchDate = true;
@@ -105,10 +123,18 @@
                     const lastMonth = new Date(today);
                     lastMonth.setMonth(today.getMonth() - 1);
                     matchDate = lessonDate.getMonth() === lastMonth.getMonth() && lessonDate.getFullYear() === lastMonth.getFullYear();
+                } else if (dateFilter === 'specific' && specificDate) {
+                    matchDate = lessonDate.toDateString() === new Date(specificDate).toDateString();
                 }
 
                 return matchSubject && matchDate;
             });
+
+            if (dateFilter === 'all') {
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            }
+
+            currentPage = 1;
             renderLessons(filtered);
         }
 
@@ -130,10 +156,28 @@
         }
 
         document.getElementById('subjectFilter').addEventListener('change', filterLessons);
-        document.getElementById('dateFilter').addEventListener('change', filterLessons);
+        document.getElementById('dateFilter').addEventListener('change', () => {
+            const specificDateInput = document.getElementById('specificDate');
+            specificDateInput.classList.toggle('hidden', document.getElementById('dateFilter').value !== 'specific');
+            filterLessons();
+        });
+        document.getElementById('specificDate').addEventListener('input', filterLessons);
         document.getElementById('back-button').addEventListener('click', () => {
             document.getElementById('lesson-page').classList.add('hidden');
             document.getElementById('main-page').classList.remove('hidden');
+        });
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                filterLessons();
+            }
+        });
+        document.getElementById('nextPage').addEventListener('click', () => {
+            const totalPages = Math.ceil(lessons.length / lessonsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                filterLessons();
+            }
         });
     </script>
 </body>
