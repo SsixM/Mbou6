@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Уроки</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <button id="theme-toggle" class="theme-toggle">🌙 Тёмная тема</button>
+        <div id="main-page">
+            <h1>Уроки</h1>
+            <div class="filters">
+                <select id="subjectFilter">
+                    <option value="all">Все предметы</option>
+                    <option value="Русский язык">Русский язык</option>
+                    <option value="Биология">Биология</option>
+                    <option value="Алгебра">Алгебра</option>
+                    <option value="Физика">Физика</option>
+                    <option value="История">История</option>
+                    <option value="Геометрия">Геометрия</option>
+                    <option value="Технология">Технология</option>
+                    <option value="Литература">Литература</option>
+                    <option value="География">География</option>
+                    <option value="Химия">Химия</option>
+                    <option value="Физкультура">Физкультура</option>
+                    <option value="Информатика">Информатика</option>
+                    <option value="ОБЖ">ОБЖ</option>
+                    <option value="Английский язык">Английский язык</option>
+                </select>
+                <input type="date" id="dateFilter">
+            </div>
+            <div class="lessons" id="lessons"></div>
+        </div>
+        <div id="lesson-page" class="hidden">
+            <button id="back-button" class="back-button">← Назад</button>
+            <h2 id="lesson-title"></h2>
+            <p id="lesson-subject"></p>
+            <p id="lesson-date"></p>
+            <p id="lesson-description"></p>
+            <div id="lesson-content"></div>
+            <button id="raw-text-button" class="raw-text-button">Показать сырой текст</button>
+            <div id="raw-text" class="hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let lessons = [];
+
+        // Загрузка уроков из JSON
+        fetch('lessons.json')
+            .then(response => response.json())
+            .then(data => {
+                lessons = data;
+                renderLessons(lessons);
+            })
+            .catch(error => console.error('Ошибка загрузки уроков:', error));
+
+        function renderLessons(filteredLessons) {
+            const lessonsContainer = document.getElementById('lessons');
+            lessonsContainer.innerHTML = '';
+            filteredLessons.forEach((lesson, index) => {
+                const card = document.createElement('div');
+                card.className = 'lesson-card';
+                card.dataset.index = index;
+                card.innerHTML = `
+                    <h3>${lesson.title}</h3>
+                    <p>Предмет: ${lesson.subject}</p>
+                    <p>Дата: ${lesson.date}</p>
+                    <p>${lesson.description}</p>
+                `;
+                card.addEventListener('click', () => showLesson(index));
+                lessonsContainer.appendChild(card);
+            });
+        }
+
+        function filterLessons() {
+            const subject = document.getElementById('subjectFilter').value;
+            const date = document.getElementById('dateFilter').value;
+            const filtered = lessons.filter(lesson => {
+                const matchSubject = subject === 'all' || lesson.subject === subject;
+                const matchDate = !date || lesson.date === date;
+                return matchSubject && matchDate;
+            });
+            renderLessons(filtered);
+        }
+
+        function showLesson(index) {
+            const lesson = lessons[index];
+            document.getElementById('main-page').classList.add('hidden');
+            document.getElementById('lesson-page').classList.remove('hidden');
+            document.getElementById('lesson-title').textContent = lesson.title;
+            document.getElementById('lesson-subject').textContent = `Предмет: ${lesson.subject}`;
+            document.getElementById('lesson-date').textContent = `Дата: ${lesson.date}`;
+            document.getElementById('lesson-description').textContent = lesson.description;
+            document.getElementById('lesson-content').innerHTML = lesson.content;
+            document.getElementById('raw-text').innerHTML = lesson.rawText;
+            document.getElementById('raw-text-button').onclick = () => {
+                const rawTextDiv = document.getElementById('raw-text');
+                rawTextDiv.classList.toggle('hidden');
+                document.getElementById('raw-text-button').textContent = rawTextDiv.classList.contains('hidden') ? 'Показать сырой текст' : 'Скрыть сырой текст';
+            };
+        }
+
+        document.getElementById('subjectFilter').addEventListener('change', filterLessons);
+        document.getElementById('dateFilter').addEventListener('input', filterLessons);
+        document.getElementById('back-button').addEventListener('click', () => {
+            document.getElementById('lesson-page').classList.add('hidden');
+            document.getElementById('main-page').classList.remove('hidden');
+        });
+
+        // Переключение темы
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            themeToggle.textContent = document.body.classList.contains('dark-theme') ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        });
+
+        // Загрузка сохранённой темы
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+            themeToggle.textContent = '☀️ Светлая тема';
+        }
+    </script>
+</body>
+</html>
