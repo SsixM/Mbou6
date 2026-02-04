@@ -3,182 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Уроки</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Уроки | База знаний</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark-theme">
-    <div class="container">
-        <div id="main-page">
-            <h1>Уроки</h1>
-            <div class="filters">
-                <select id="subjectFilter">
-                    <option value="all">Все предметы</option>
-                    <option value="Русский язык">Русский язык</option>
-                    <option value="Биология">Биология</option>
-                    <option value="Алгебра">Алгебра</option>
-                    <option value="Физика">Физика</option>
-                    <option value="История">История</option>
-                    <option value="Геометрия">Геометрия</option>
-                    <option value="Технология">Технология</option>
-                    <option value="Литература">Литература</option>
-                    <option value="География">География</option>
-                    <option value="Химия">Химия</option>
-                    <option value="Физкультура">Физкультура</option>
-                    <option value="Информатика">Информатика</option>
-                    <option value="ОБЖ">ОБЖ</option>
-                    <option value="Английский язык">Английский язык</option>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo"><span></span></div>
+            <div class="nav-controls">
+                <select id="sort-select" class="control-select">
+                    <option value="newest">Сначала новые</option>
+                    <option value="oldest">Сначала старые</option>
                 </select>
-                <select id="dateFilter">
-                    <option value="all">Все время</option>
-                    <option value="today">Сегодня</option>
-                    <option value="week">Эта неделя</option>
-                    <option value="month">Этот месяц</option>
-                    <option value="lastMonth">Прошлый месяц</option>
-                    <option value="specific">Конкретная дата</option>
-                </select>
-                <input type="date" id="specificDate" class="hidden">
-            </div>
-            <div class="lessons" id="lessons"></div>
-            <div class="pagination">
-                <button id="prevPage" class="page-button" disabled>← Предыдущая</button>
-                <span id="pageInfo"></span>
-                <button id="nextPage" class="page-button">Следующая →</button>
             </div>
         </div>
-        <div id="lesson-page" class="hidden">
-            <button id="back-button" class="back-button">← Назад</button>
-            <h2 id="lesson-title"></h2>
-            <p id="lesson-subject"></p>
-            <p id="lesson-date"></p>
-            <p id="lesson-description"></p>
-            <div id="lesson-content"></div>
-            <button id="raw-text-button" class="raw-text-button">Показать сырой текст</button>
-            <div id="raw-text" class="hidden"></div>
+    </nav>
+
+    <main id="scene-home" class="container">
+        
+        <header class="hero">
+            <h1>Учебные материалы</h1>
+            <p>Поиск по конспектам, предметам и датам</p>
+            
+            <div class="search-wrapper">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="search-input" placeholder="Найти тему, формулу или дату...">
+            </div>
+
+            <div class="filters-scroll">
+                <div class="filters" id="filters-container">
+                    <button class="chip active" data-filter="all">Все</button>
+                    </div>
+            </div>
+        </header>
+
+        <div id="loader" class="loader">
+            <div class="spinner"></div>
+            <p>Загрузка уроков...</p>
+        </div>
+
+        <div id="error-msg" class="error-msg" style="display: none;"></div>
+
+        <div class="grid" id="lesson-grid"></div>
+    </main>
+
+    <div id="scene-lesson" class="lesson-overlay">
+        <div class="lesson-wrapper">
+            <div class="lesson-header">
+                <button class="back-btn" onclick="app.closeLesson()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Назад
+                </button>
+                <div class="lesson-meta-header">
+                    <span id="lesson-subject-badge" class="badge">Предмет</span>
+                    <span id="lesson-date-display" class="date-display">Дата</span>
+                </div>
+            </div>
+            <div id="lesson-content" class="markdown-body"></div>
         </div>
     </div>
 
-    <script>
-        let lessons = [];
-        let currentPage = 1;
-        const lessonsPerPage = 50;
-
-        // Загрузка уроков из JSON
-        fetch('lessons.json')
-            .then(response => response.json())
-            .then(data => {
-                lessons = data;
-                filterLessons();
-            })
-            .catch(error => console.error('Ошибка загрузки уроков:', error));
-
-        function renderLessons(filteredLessons) {
-            const lessonsContainer = document.getElementById('lessons');
-            lessonsContainer.innerHTML = '';
-            const start = (currentPage - 1) * lessonsPerPage;
-            const end = start + lessonsPerPage;
-            const paginatedLessons = filteredLessons.slice(start, end);
-
-            paginatedLessons.forEach((lesson, index) => {
-                const card = document.createElement('div');
-                card.className = 'lesson-card';
-                card.dataset.index = start + index;
-                card.innerHTML = `
-                    <h3>${lesson.title}</h3>
-                    <p>Предмет: ${lesson.subject}</p>
-                    <p>Дата: ${lesson.date}</p>
-                    <p>${lesson.description}</p>
-                `;
-                card.addEventListener('click', () => showLesson(start + index));
-                lessonsContainer.appendChild(card);
-            });
-
-            const totalPages = Math.ceil(filteredLessons.length / lessonsPerPage);
-            document.getElementById('pageInfo').textContent = `Страница ${currentPage} из ${totalPages}`;
-            document.getElementById('prevPage').disabled = currentPage === 1;
-            document.getElementById('nextPage').disabled = currentPage === totalPages;
-        }
-
-        function filterLessons() {
-            const subject = document.getElementById('subjectFilter').value;
-            const dateFilter = document.getElementById('dateFilter').value;
-            const specificDate = document.getElementById('specificDate').value;
-            const today = new Date('2025-09-02');
-
-            let filtered = lessons.filter(lesson => {
-                const matchSubject = subject === 'all' || lesson.subject === subject;
-                const lessonDate = new Date(lesson.date);
-                let matchDate = true;
-
-                if (dateFilter === 'today') {
-                    matchDate = lessonDate.toDateString() === today.toDateString();
-                } else if (dateFilter === 'week') {
-                    const weekStart = new Date(today);
-                    weekStart.setDate(today.getDate() - today.getDay());
-                    const weekEnd = new Date(weekStart);
-                    weekEnd.setDate(weekStart.getDate() + 6);
-                    matchDate = lessonDate >= weekStart && lessonDate <= weekEnd;
-                } else if (dateFilter === 'month') {
-                    matchDate = lessonDate.getMonth() === today.getMonth() && lessonDate.getFullYear() === today.getFullYear();
-                } else if (dateFilter === 'lastMonth') {
-                    const lastMonth = new Date(today);
-                    lastMonth.setMonth(today.getMonth() - 1);
-                    matchDate = lessonDate.getMonth() === lastMonth.getMonth() && lessonDate.getFullYear() === lastMonth.getFullYear();
-                } else if (dateFilter === 'specific' && specificDate) {
-                    matchDate = lessonDate.toDateString() === new Date(specificDate).toDateString();
-                }
-
-                return matchSubject && matchDate;
-            });
-
-            if (dateFilter === 'all') {
-                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-            }
-
-            currentPage = 1;
-            renderLessons(filtered);
-        }
-
-        function showLesson(index) {
-            const lesson = lessons[index];
-            document.getElementById('main-page').classList.add('hidden');
-            document.getElementById('lesson-page').classList.remove('hidden');
-            document.getElementById('lesson-title').textContent = lesson.title;
-            document.getElementById('lesson-subject').textContent = `Предмет: ${lesson.subject}`;
-            document.getElementById('lesson-date').textContent = `Дата: ${lesson.date}`;
-            document.getElementById('lesson-description').textContent = lesson.description;
-            document.getElementById('lesson-content').innerHTML = lesson.content;
-            document.getElementById('raw-text').innerHTML = lesson.rawText;
-            document.getElementById('raw-text-button').onclick = () => {
-                const rawTextDiv = document.getElementById('raw-text');
-                rawTextDiv.classList.toggle('hidden');
-                document.getElementById('raw-text-button').textContent = rawTextDiv.classList.contains('hidden') ? 'Показать сырой текст' : 'Скрыть сырой текст';
-            };
-        }
-
-        document.getElementById('subjectFilter').addEventListener('change', filterLessons);
-        document.getElementById('dateFilter').addEventListener('change', () => {
-            const specificDateInput = document.getElementById('specificDate');
-            specificDateInput.classList.toggle('hidden', document.getElementById('dateFilter').value !== 'specific');
-            filterLessons();
-        });
-        document.getElementById('specificDate').addEventListener('input', filterLessons);
-        document.getElementById('back-button').addEventListener('click', () => {
-            document.getElementById('lesson-page').classList.add('hidden');
-            document.getElementById('main-page').classList.remove('hidden');
-        });
-        document.getElementById('prevPage').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                filterLessons();
-            }
-        });
-        document.getElementById('nextPage').addEventListener('click', () => {
-            const totalPages = Math.ceil(lessons.length / lessonsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                filterLessons();
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

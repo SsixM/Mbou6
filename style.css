@@ -1,0 +1,227 @@
+:root {
+    --bg: #0f1115;
+    --surface: #181a20;
+    --surface-hover: #22252e;
+    --border: #2a2d35;
+    --primary: #6366f1;
+    --text: #ffffff;
+    --text-secondary: #9ca3af;
+    --radius: 16px;
+    --font-main: 'Inter', sans-serif;
+    
+    /* Цвета предметов */
+    --color-default: #6366f1;
+    --color-math: #3b82f6;     /* Алгебра/Геометрия */
+    --color-history: #f59e0b;  /* История */
+    --color-bio: #10b981;      /* Биология */
+    --color-phys: #8b5cf6;     /* Физика */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-main);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Navbar */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15, 17, 21, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
+}
+
+.nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo { font-weight: 800; font-size: 1.5rem; letter-spacing: -0.05em; }
+.logo span { color: var(--primary); }
+
+.control-select {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    outline: none;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Hero & Search */
+.hero { text-align: center; margin-bottom: 50px; }
+.hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
+.hero p { color: var(--text-secondary); margin-bottom: 30px; }
+
+.search-wrapper {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto 30px;
+}
+
+.search-wrapper svg {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+#search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 16px 16px 48px;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+    outline: none;
+}
+
+#search-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+/* Filters */
+.filters-scroll { overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
+.filters { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+@media(max-width: 600px) { .filters { justify-content: flex-start; flex-wrap: nowrap; } }
+
+.chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.chip:hover { border-color: var(--text-secondary); color: white; }
+.chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 200px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    background: var(--surface-hover);
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--item-color, var(--color-default));
+}
+
+.card-top { margin-bottom: 15px; }
+.card-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--item-color, var(--color-default));
+    margin-bottom: 8px;
+}
+
+.card-title { font-size: 1.25rem; font-weight: 700; line-height: 1.4; color: #fff; }
+.card-footer { display: flex; justify-content: space-between; align-items: center; color: var(--text-secondary); font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px; margin-top: auto;}
+
+/* Lesson View Overlay */
+.lesson-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg);
+    z-index: 200;
+    overflow-y: auto;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.lesson-wrapper { max-width: 800px; margin: 0 auto; padding: 40px 20px 100px; }
+
+.lesson-header {
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 20px;
+    z-index: 10;
+}
+
+.back-btn {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+.back-btn:hover { background: white; color: black; }
+
+.badge { padding: 4px 12px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; background: var(--surface); border: 1px solid var(--border); }
+
+/* Loader & Error */
+.loader { text-align: center; padding: 40px; color: var(--text-secondary); }
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-msg { text-align: center; color: #ef4444; padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: 12px; }
+
+/* Markdown Overrides for Dark Theme */
+.markdown-body { background: transparent !important; color: #e6edf3 !important; font-family: var(--font-main) !important; }
+.markdown-body h1, .markdown-body h2 { border-bottom-color: var(--border) !important; }
+.markdown-body pre { background: var(--surface) !important; border: 1px solid var(--border); }
