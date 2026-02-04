@@ -1,16 +1,33 @@
 const app = {
     data: [],
-    url: 'https://raw.githubusercontent.com/SsixM/Mbou6/refs/heads/main/lessons.json',
     state: {
         filter: 'all',
         search: '',
         sort: 'newest'
     },
+    initData() {
+        // Берем данные напрямую из переменной lessons, которая загрузилась из lessons.js
+        if (typeof lessons !== 'undefined') {
+            this.data = lessons;
+            
+            // Если нужно - искусственная задержка для красоты лоадера (можно убрать)
+            setTimeout(() => {
+                this.dom.loader.style.display = 'none';
+                this.generateFilters();
+                this.render();
+            }, 500); 
+        } else {
+            this.dom.loader.style.display = 'none';
+            this.dom.error.textContent = 'Ошибка: файл lessons.js не найден или поврежден';
+            this.dom.error.style.display = 'block';
+        }
+    },
 
+    // Не забудь в методе init() заменить вызов fetchData() на initData()
     init() {
         this.cacheDOM();
         this.bindEvents();
-        this.fetchData();
+        this.initData(); // <-- Изменено
     },
 
     cacheDOM() {
@@ -50,22 +67,6 @@ const app = {
                 e.target.classList.add('active');
             }
         });
-    },
-
-    async fetchData() {
-        try {
-            const response = await fetch(this.url);
-            if (!response.ok) throw new Error('Ошибка сети');
-            this.data = await response.json();
-            
-            this.dom.loader.style.display = 'none';
-            this.generateFilters();
-            this.render();
-        } catch (err) {
-            this.dom.loader.style.display = 'none';
-            this.dom.error.textContent = `Не удалось загрузить уроки: ${err.message}`;
-            this.dom.error.style.display = 'block';
-        }
     },
 
     generateFilters() {
