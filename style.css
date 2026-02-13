@@ -285,3 +285,117 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-dark); }
 ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #555; }
+/* В конец style.css */
+
+@media (max-width: 768px) {
+    .container {
+        padding: 2rem 1rem; /* Меньше отступов по бокам на мобилках */
+    }
+
+    .hero h1 {
+        font-size: 2.5rem; /* Уменьшаем заголовок, чтобы не переносился некрасиво */
+        margin-top: 1rem;
+    }
+
+    .grid {
+        grid-template-columns: 1fr; /* Только одна колонка */
+        gap: 1.2rem;
+    }
+
+    .card-body {
+        padding: 1.5rem; /* Чуть меньше паддинги в карточках */
+    }
+}
+@media (max-width: 768px) {
+    .search-box {
+        margin-bottom: 1.5rem;
+    }
+
+    #search-input {
+        padding: 1rem 1rem 1rem 3rem;
+        font-size: 1rem;
+        border-radius: 12px; /* Более мягкие углы */
+    }
+
+    .filters-wrapper {
+        margin: 0 -1rem; /* Выводим фильтры "за край" экрана для красоты прокрутки */
+        padding: 0 1rem 15px;
+        -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+    }
+
+    .filters {
+        justify-content: flex-start; /* На мобилках всегда от левого края */
+        gap: 8px;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        white-space: nowrap; /* Чтобы текст не переносился */
+    }
+}
+@media (max-width: 768px) {
+    .modal-window {
+        height: 100%; /* На весь экран */
+        max-height: 100vh;
+        border-radius: 0; /* Убираем скругления, если на весь экран */
+        margin-top: 0;
+    }
+
+    .modal-header {
+        padding: 1rem;
+        position: sticky;
+        top: 0;
+        background: rgba(9, 9, 11, 0.9);
+        backdrop-filter: blur(10px);
+        z-index: 10;
+    }
+
+    .modal-body {
+        padding: 1.5rem 1rem; /* Больше места для текста */
+    }
+
+    /* Делаем шрифт конспекта более читабельным для мобилок */
+    .markdown-body {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+    }
+
+    .modal-meta {
+        flex-direction: column; /* Тег предмета и дата друг под другом */
+        align-items: flex-end;
+        gap: 4px;
+    }
+    
+    .tag {
+        font-size: 0.7rem;
+    }
+}
+/* Улучшаем вид карточек при касании */
+@media (hover: none) {
+    .card:active {
+        transform: scale(0.98);
+        background: var(--card-hover);
+    }
+}
+
+/* Скрываем скроллбар у фильтров, но оставляем функционал */
+.filters-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+/* Навигация (Navbar) на мобилках */
+@media (max-width: 768px) {
+    .nav-content {
+        padding: 0 1rem;
+    }
+    
+    .logo {
+        font-size: 1.2rem;
+    }
+
+    .glass-input {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.7rem;
+    }
+}

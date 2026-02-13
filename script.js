@@ -208,6 +208,7 @@ const app = {
         this.dom.pageInfo.textContent = `${this.state.currentPage} / ${totalPages}`;
         this.dom.prevBtn.disabled = this.state.currentPage === 1;
         this.dom.nextBtn.disabled = this.state.currentPage === totalPages;
+        
     },
 
 openLesson(lesson, pushState = true) {
