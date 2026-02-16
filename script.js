@@ -157,34 +157,33 @@ const app = {
         return map[subject] || '#a8a29e'; // Стандартный серый для неизвестных предметов
     },
 
-    render() {
-        // ЛОГИКА ПОИСКА (включая дату!)
+render() {
+        // 1. ЛОГИКА ПОИСКА
         let processedData = this.data.filter(item => {
-            // Форматируем дату в строку "dd.mm.yyyy" для поиска
             const dateObj = new Date(item.date);
-            const dateStrRu = dateObj.toLocaleDateString('ru-RU'); // 02.02.2026
-            const dateStrFull = dateObj.toLocaleDateString('ru-RU', { month: 'long' }).toLowerCase(); // ...февраля...
+            const dateStrRu = dateObj.toLocaleDateString('ru-RU'); 
+            const dateStrFull = dateObj.toLocaleDateString('ru-RU', { month: 'long' }).toLowerCase();
 
             const matchesSearch = (
                 item.title.toLowerCase().includes(this.state.search) ||
                 item.subject.toLowerCase().includes(this.state.search) ||
                 item.content.toLowerCase().includes(this.state.search) ||
-                dateStrRu.includes(this.state.search) || // Ищем "02.02"
-                dateStrFull.includes(this.state.search)  // Ищем "февраль"
+                dateStrRu.includes(this.state.search) || 
+                dateStrFull.includes(this.state.search)
             );
 
             const matchesFilter = this.state.filter === 'all' || item.subject === this.state.filter;
             return matchesSearch && matchesFilter;
         });
 
-        // Сортировка
+        // 2. СОРТИРОВКА
         processedData.sort((a, b) => {
             const d1 = new Date(a.date);
             const d2 = new Date(b.date);
             return this.state.sort === 'newest' ? d2 - d1 : d1 - d2;
         });
 
-        // Пагинация
+        // 3. ПАГИНАЦИЯ
         const totalItems = processedData.length;
         const totalPages = Math.ceil(totalItems / this.state.itemsPerPage);
         
@@ -194,23 +193,28 @@ const app = {
         const start = (this.state.currentPage - 1) * this.state.itemsPerPage;
         const pageData = processedData.slice(start, start + this.state.itemsPerPage);
 
-        // Рендер
+        // 4. ОЧИСТКА СЕТКИ
         this.dom.grid.innerHTML = '';
         
         if (totalItems === 0) {
             this.dom.grid.innerHTML = `<div class="empty-placeholder">Ничего не найдено 👻</div>`;
             this.dom.pagination.style.display = 'none';
+            // Восстанавливаем Grid для сообщения об ошибке
+            this.dom.grid.style.display = 'grid'; 
+            this.dom.grid.style.gridTemplateColumns = '1fr';
             return;
         }
 
-        pageData.forEach((lesson, index) => {
+        // --- ГЕНЕРАТОР КАРТОЧКИ (Внутренняя функция) ---
+        const createCardHTML = (lesson, index) => {
             const card = document.createElement('div');
             card.className = 'card';
-            // Stagger animation: задержка появления для каждого следующего элемента
-            card.style.animationDelay = `${index * 50}ms`; 
+            // Анимация задержки
+            card.style.animationDelay = `${(index % 10) * 50}ms`; 
             
             const color = this.getSubjectColor(lesson.subject);
-            const dateStr = new Date(lesson.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+            // Формат даты: "2 фев"
+            const dateStr = new Date(lesson.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 
             card.innerHTML = `
                 <div class="card-glow" style="background: ${color}"></div>
@@ -227,15 +231,83 @@ const app = {
             `;
             
             card.onclick = () => this.openLesson(lesson);
-            this.dom.grid.appendChild(card);
-        });
+            return card;
+        };
 
-        // Контролы пагинации
+        // 5. ОТРИСОВКА (С группировкой или без)
+        
+        // Если сортировка по дате -> включаем режим "МЭШ" (группировка)
+        if (this.state.sort === 'newest' || this.state.sort === 'oldest') {
+            this.dom.grid.style.display = 'block'; // Убираем CSS Grid с контейнера
+            
+            // Группируем текущую страницу данных по датам
+            const groups = {};
+            pageData.forEach(item => {
+                const dateKey = item.date; 
+                if (!groups[dateKey]) groups[dateKey] = [];
+                groups[dateKey].push(item);
+            });
+
+            // Получаем уникальные даты в правильном порядке
+            // (Set сохраняет порядок вставки, а processedData уже отсортирован)
+            const uniqueDates = [...new Set(pageData.map(item => item.date))];
+
+            uniqueDates.forEach(date => {
+                const itemsInDay = groups[date];
+                const dayGroup = document.createElement('div');
+                dayGroup.className = 'day-group';
+                
+                // --- Форматирование даты ---
+                const d = new Date(date);
+                const today = new Date();
+                const yesterday = new Date();
+                yesterday.setDate(today.getDate() - 1);
+
+                let dayName = d.toLocaleDateString('ru-RU', { weekday: 'long' });
+                dayName = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+                const dayDate = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+                
+                // Проверка на сегодня/вчера
+                let badge = '';
+                if (d.toDateString() === today.toDateString()) {
+                    badge = `<span class="day-today">Сегодня</span>`;
+                } else if (d.toDateString() === yesterday.toDateString()) {
+                    badge = `<span class="day-today" style="background: var(--text-muted)">Вчера</span>`;
+                }
+
+                dayGroup.innerHTML = `
+                    <div class="day-header">
+                        <span class="day-name">${dayName}</span>
+                        <span class="day-date">${dayDate}</span>
+                        ${badge}
+                    </div>
+                    <div class="day-grid"></div>
+                `;
+
+                const gridContainer = dayGroup.querySelector('.day-grid');
+                itemsInDay.forEach((lesson, idx) => {
+                    gridContainer.appendChild(createCardHTML(lesson, idx));
+                });
+
+                this.dom.grid.appendChild(dayGroup);
+            });
+
+        } else {
+            // ОБЫЧНЫЙ РЕЖИМ (Сетка) - для сортировки не по дате
+            this.dom.grid.style.display = 'grid';
+            this.dom.grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+            
+            pageData.forEach((lesson, index) => {
+                this.dom.grid.appendChild(createCardHTML(lesson, index));
+            });
+        }
+
+        // Обновляем контролы пагинации
         this.dom.pagination.style.display = totalPages > 1 ? 'flex' : 'none';
         this.dom.pageInfo.textContent = `${this.state.currentPage} / ${totalPages}`;
         this.dom.prevBtn.disabled = this.state.currentPage === 1;
         this.dom.nextBtn.disabled = this.state.currentPage === totalPages;
-        
     },
 
 openLesson(lesson, pushState = true) {

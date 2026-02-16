@@ -399,3 +399,74 @@ body {
         padding: 0.4rem 0.7rem;
     }
 }
+/* --- CLEAN DIARY LAYOUT (MESH STYLE) --- */
+
+.day-group {
+    width: 100%;
+    margin-bottom: 4rem; /* Больше воздуха между днями */
+    position: relative;
+}
+
+.day-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 0;
+    margin-bottom: 24px;
+    
+    /* Фиксируем под шапкой (шапка ~70px) */
+    position: sticky;
+    top: 68px; 
+    z-index: 10;
+    
+    background: var(--bg-dark);
+    /* Мягкое размытие под заголовком */
+    box-shadow: 0 -10px 20px 10px var(--bg-dark);
+}
+
+.day-name {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-main);
+}
+
+.day-date {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Линия в стиле минимализма */
+.day-header::after {
+    content: '';
+    flex-grow: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--border), transparent);
+}
+
+.day-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    padding-top: 10px;
+}
+
+/* Бейдж "Сегодня" — сделаем его аккуратным */
+.day-today {
+    background: var(--primary);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+@media (max-width: 768px) {
+    .day-header { top: 60px; }
+    .day-name { font-size: 1.4rem; }
+    .day-date { font-size: 0.9rem; }
+}
