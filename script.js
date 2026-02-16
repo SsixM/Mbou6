@@ -309,7 +309,61 @@ render() {
         this.dom.prevBtn.disabled = this.state.currentPage === 1;
         this.dom.nextBtn.disabled = this.state.currentPage === totalPages;
     },
+summarize(text) {
+        if (!text) return "";
 
+        // 1. Очистка от Markdown и фильтрация мусорных строк
+        const cleanText = text.replace(/[#*`-]/g, '').replace(/\[.*\]\(.*\)/g, '');
+        
+        // Разбиваем на предложения и убираем заголовки/инструкции
+        const sentences = cleanText.split(/[.!?\n]\s/)
+            .map(s => s.trim())
+            .filter(s => {
+                const lower = s.toLowerCase();
+                return s.length > 35 && 
+                       !lower.includes("изучить") && 
+                       !lower.includes("параграф") && 
+                       !lower.includes("конспект") && 
+                       !lower.includes("урок");
+            });
+
+        if (sentences.length === 0) return "Краткая выжимка недоступна.";
+
+        // 2. Считаем веса слов
+        const wordFreq = {};
+        const words = cleanText.toLowerCase().match(/[а-яёa-z]{4,}/g) || [];
+        words.forEach(word => {
+            wordFreq[word] = (wordFreq[word] || 0) + 1;
+        });
+
+        // 3. Оцениваем важность каждого предложения
+        const scores = sentences.map(sentence => {
+            let score = 0;
+            const sLower = sentence.toLowerCase();
+            const sWords = sLower.match(/[а-яёa-z]{4,}/g) || [];
+            
+            sWords.forEach(w => {
+                if (wordFreq[w]) score += wordFreq[w];
+            });
+
+            // ПРИОРЕТЕТ: Определения и хим. свойства
+            if (sLower.includes("это")) score *= 2.0;
+            if (sLower.includes("образуется")) score *= 1.5;
+            if (sLower.includes("реакция")) score *= 1.5;
+            if (sLower.includes("свойства")) score *= 1.5;
+            
+            return { sentence, score: score / (sWords.length + 1) };
+        });
+
+        // 4. Выбираем ТОП-4 самых ценных мысли
+        scores.sort((a, b) => b.score - a.score);
+        const bestSentences = scores.slice(0, 4).map(s => s.sentence);
+
+        // 5. Формируем список с переносами строк
+        return bestSentences
+            .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+            .join('\n\n'); // Двойной перенос для красоты
+    },
 openLesson(lesson, pushState = true) {
     this.dom.lessonContent.innerHTML = marked.parse(lesson.content);
     
@@ -318,7 +372,18 @@ openLesson(lesson, pushState = true) {
     this.dom.lessonSubject.style.backgroundColor = `${color}20`;
     this.dom.lessonSubject.style.color = color;
     this.dom.lessonSubject.style.borderColor = color;
-    
+    const mainThought = this.summarize(lesson.content);
+
+        // Вставляем её в контент (перед основным текстом)
+        this.dom.lessonContent.innerHTML = `
+            <div class="ai-summary">
+                <div class="summary-badge">⚡ Суть урока</div>
+                <p class="summary-text">${mainThought}</p>
+            </div>
+            <div class="markdown-body">
+                ${marked.parse(lesson.content)}
+            </div>
+        `;
     this.dom.lessonDate.textContent = new Date(lesson.date).toLocaleDateString('ru-RU', { 
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
     });
