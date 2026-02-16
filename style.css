@@ -1,3 +1,10 @@
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    /* Убирает синее выделение при клике на мобилках */
+    -webkit-tap-highlight-color: transparent; 
+}
 :root {
     --bg-dark: #050507;
     --card-bg: #101014;
@@ -562,4 +569,8 @@ body {
     background: var(--primary);
     border-radius: 2px;
     opacity: 0.5;
+}
+.card:active, .close-btn:active, .ai-summary:active {
+    transform: scale(0.97);
+    transition: transform 0.1s;
 }
