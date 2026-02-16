@@ -250,11 +250,21 @@ body {
     display: flex; flex-direction: column;
 }
 
-@media (min-width: 768px) {
-    .modal-window { 
-        height: 90vh; margin-top: 5vh; 
-        border-radius: 24px; border: 1px solid var(--border);
-        box-shadow: 0 50px 100px -20px rgba(0,0,0,0.8);
+@media (max-width: 768px) {
+    .nav-container { flex-direction: column; }
+    .day-name { font-size: 1.3rem; }
+    .day-header { top: 110px; } /* Чуть ниже из-за мобильной навигации */
+    
+    .modal-window {
+        padding: 1rem;
+    }
+    
+    .markdown-body {
+        font-size: 17px !important; /* Крупный шрифт для чтения с телефона */
+    }
+    
+    .day-grid {
+        grid-template-columns: 1fr;
     }
 }
 .modal-overlay.active .modal-window { transform: translateY(0) scale(1); }
