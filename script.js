@@ -34,20 +34,17 @@ const app = {
     },
 
     bindEvents() {
-        // Поиск
         this.dom.searchInput.addEventListener('input', (e) => {
             this.state.search = e.target.value.toLowerCase().trim();
             this.state.currentPage = 1;
             this.animateGridUpdate();
         });
 
-        // Сортировка
         this.dom.sortSelect.addEventListener('change', (e) => {
             this.state.sort = e.target.value;
             this.animateGridUpdate();
         });
 
-        // Фильтры
         this.dom.filtersContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('filter-btn')) {
                 document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
@@ -58,11 +55,9 @@ const app = {
             }
         });
 
-        // Пагинация
         this.dom.prevBtn.addEventListener('click', () => this.changePage(-1));
         this.dom.nextBtn.addEventListener('click', () => this.changePage(1));
         
-        // ESC закрывает модалку
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') this.closeLesson();
         });
@@ -104,7 +99,6 @@ const app = {
         this.animateGridUpdate();
     },
 
-    // Плавная смена контента сетки
     animateGridUpdate() {
         this.dom.grid.style.opacity = '0';
         this.dom.grid.style.transform = 'translateY(10px)';
@@ -117,48 +111,37 @@ const app = {
     },
 
     getSubjectColor(subject) {
-        // Неоновые цвета (Tailwind Palette)
         const map = {
-            // Точные науки
-            'Алгебра': '#3b82f6',        // Blue
-            'Геометрия': '#06b6d4',      // Cyan
-            'Физика': '#8b5cf6',         // Violet
-            'Химия': '#ec4899',          // Pink
-            'Информатика': '#6366f1',    // Indigo
-            'Математика': '#2563eb',     // Royal Blue
-            'Астрономия': '#4338ca',     // Indigo/Deep Blue
-
-            // Естественные науки
-            'Биология': '#10b981',       // Emerald
-            'География': '#14b8a6',      // Teal
-            'Экология': '#059669',       // Green
-
-            // Гуманитарные науки
-            'История': '#f59e0b',        // Amber
-            'Обществознание': '#f97316', // Orange
-            'Философия': '#78350f',      // Brown/Amber
-            'Право': '#b91c1c',          // Red
-
-            // Языки и литература
-            'Русский язык': '#ef4444',    // Red
-            'Литература': '#db2777',     // Pink/Rose
-            'Английский язык': '#84cc16', // Lime
-            'Иностранный язык': '#a3e635',// Light Lime
-
-            // Прочее
-            'Физкультура': '#fbbf24',    // Yellow
-            'ОБЖ': '#dc2626',            // Bright Red
-            'МХК': '#d946ef',            // Fuchsia
-            'Изо': '#f472b6',            // Light Pink
-            'Музыка': '#2dd4bf',         // Turquoise
-            'Технология': '#71717a',     // Zinc/Gray
+            'Алгебра': '#3b82f6',
+            'Геометрия': '#06b6d4',
+            'Физика': '#8b5cf6',
+            'Химия': '#ec4899',
+            'Информатика': '#6366f1',
+            'Математика': '#2563eb',
+            'Астрономия': '#4338ca',
+            'Биология': '#10b981',
+            'География': '#14b8a6',
+            'Экология': '#059669',
+            'История': '#f59e0b',
+            'Обществознание': '#f97316',
+            'Философия': '#78350f',
+            'Право': '#b91c1c',
+            'Русский язык': '#ef4444',
+            'Литература': '#db2777',
+            'Английский язык': '#84cc16',
+            'Иностранный язык': '#a3e635',
+            'Физкультура': '#fbbf24',
+            'ОБЖ': '#dc2626',
+            'МХК': '#d946ef',
+            'Изо': '#f472b6',
+            'Музыка': '#2dd4bf',
+            'Технология': '#71717a',
         };
 
-        return map[subject] || '#a8a29e'; // Стандартный серый для неизвестных предметов
+        return map[subject] || '#a8a29e'; 
     },
 
-render() {
-        // 1. ЛОГИКА ПОИСКА
+    render() {
         let processedData = this.data.filter(item => {
             const dateObj = new Date(item.date);
             const dateStrRu = dateObj.toLocaleDateString('ru-RU'); 
@@ -176,14 +159,12 @@ render() {
             return matchesSearch && matchesFilter;
         });
 
-        // 2. СОРТИРОВКА
         processedData.sort((a, b) => {
             const d1 = new Date(a.date);
             const d2 = new Date(b.date);
             return this.state.sort === 'newest' ? d2 - d1 : d1 - d2;
         });
 
-        // 3. ПАГИНАЦИЯ
         const totalItems = processedData.length;
         const totalPages = Math.ceil(totalItems / this.state.itemsPerPage);
         
@@ -193,27 +174,22 @@ render() {
         const start = (this.state.currentPage - 1) * this.state.itemsPerPage;
         const pageData = processedData.slice(start, start + this.state.itemsPerPage);
 
-        // 4. ОЧИСТКА СЕТКИ
         this.dom.grid.innerHTML = '';
         
         if (totalItems === 0) {
             this.dom.grid.innerHTML = `<div class="empty-placeholder">Ничего не найдено 👻</div>`;
             this.dom.pagination.style.display = 'none';
-            // Восстанавливаем Grid для сообщения об ошибке
             this.dom.grid.style.display = 'grid'; 
             this.dom.grid.style.gridTemplateColumns = '1fr';
             return;
         }
 
-        // --- ГЕНЕРАТОР КАРТОЧКИ (Внутренняя функция) ---
         const createCardHTML = (lesson, index) => {
             const card = document.createElement('div');
             card.className = 'card';
-            // Анимация задержки
             card.style.animationDelay = `${(index % 10) * 50}ms`; 
             
             const color = this.getSubjectColor(lesson.subject);
-            // Формат даты: "2 фев"
             const dateStr = new Date(lesson.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 
             card.innerHTML = `
@@ -233,14 +209,10 @@ render() {
             card.onclick = () => this.openLesson(lesson);
             return card;
         };
-
-        // 5. ОТРИСОВКА (С группировкой или без)
         
-        // Если сортировка по дате -> включаем режим "МЭШ" (группировка)
         if (this.state.sort === 'newest' || this.state.sort === 'oldest') {
-            this.dom.grid.style.display = 'block'; // Убираем CSS Grid с контейнера
+            this.dom.grid.style.display = 'block'; 
             
-            // Группируем текущую страницу данных по датам
             const groups = {};
             pageData.forEach(item => {
                 const dateKey = item.date; 
@@ -248,8 +220,6 @@ render() {
                 groups[dateKey].push(item);
             });
 
-            // Получаем уникальные даты в правильном порядке
-            // (Set сохраняет порядок вставки, а processedData уже отсортирован)
             const uniqueDates = [...new Set(pageData.map(item => item.date))];
 
             uniqueDates.forEach(date => {
@@ -257,7 +227,6 @@ render() {
                 const dayGroup = document.createElement('div');
                 dayGroup.className = 'day-group';
                 
-                // --- Форматирование даты ---
                 const d = new Date(date);
                 const today = new Date();
                 const yesterday = new Date();
@@ -268,7 +237,6 @@ render() {
 
                 const dayDate = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
                 
-                // Проверка на сегодня/вчера
                 let badge = '';
                 if (d.toDateString() === today.toDateString()) {
                     badge = `<span class="day-today">Сегодня</span>`;
@@ -294,7 +262,6 @@ render() {
             });
 
         } else {
-            // ОБЫЧНЫЙ РЕЖИМ (Сетка) - для сортировки не по дате
             this.dom.grid.style.display = 'grid';
             this.dom.grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
             
@@ -303,156 +270,166 @@ render() {
             });
         }
 
-        // Обновляем контролы пагинации
         this.dom.pagination.style.display = totalPages > 1 ? 'flex' : 'none';
         this.dom.pageInfo.textContent = `${this.state.currentPage} / ${totalPages}`;
         this.dom.prevBtn.disabled = this.state.currentPage === 1;
         this.dom.nextBtn.disabled = this.state.currentPage === totalPages;
     },
+
 summarize(text) {
-    if (!text) return "";
+    if (!text || text.length < 100) return "";
 
-    // 1. УМНАЯ ПРЕДОБРАБОТКА
-    // Сохраняем структуру заголовков и списков, убирая только лишний визуальный мусор
-    let cleanText = text
-        .replace(/!\[.*?\]\(.*?\)/g, '') // Удаляем картинки
-        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Ссылки заменяем текстом
-        .replace(/(\*\*|__)(.*?)\1/g, '$2') // Убираем жирность, но оставляем текст
-        .replace(/[`]/g, ''); // Убираем символы кода
+    const lowText = text.toLowerCase();
+    let subject = 'general';
+    if (lowText.match(/вектор|координ|парабол|уравнен|функц/)) subject = 'math';
+    else if (lowText.match(/александр|век|реформ|царь|народник|г\.|год/)) subject = 'history';
+    else if (lowText.match(/запятая|союз|придаточ|пунктуац/)) subject = 'lang';
+    else if (lowText.match(/зубы|желудок|орган|кишеч|фермент/)) subject = 'bio';
 
-    // 2. РАЗБИВКА ПО СТРОКАМ И ПЕРВИЧНЫЙ ФИЛЬТР
-    const lines = cleanText.split('\n')
-        .map(line => line.trim())
+    const themeIcons = {
+        math: ['📐', '⚙️', '📈', '🔢'],
+        history: ['📜', '📅', '⚔️', '🏛️', '👑'],
+        lang: ['✍️', '🖇️', '📖', '📌'],
+        bio: ['🧬', '🧪', '🩸', '🌿'],
+        general: ['💎', '✨', '💡', '📌']
+    };
+
+    const getSmartIcon = (line, index) => {
+        const set = themeIcons[subject];
+        const low = line.toLowerCase();
+        if (line.match(/\b\d{4}\s?г/)) return subject === 'history' ? '📅' : set[1];
+        if (line.includes(' — ') || low.includes('это ') || low.includes('называется')) return set[0];
+        if (low.includes('если') || low.includes('правило')) return set[1];
+        return set[index % set.length];
+    };
+
+    const trashPatterns = ['домашнее', 'задание', 'выполнить', 'упражнение', 'номер', 'повторить'];
+
+    const units = text.split('\n')
+        .map(line => {
+            let c = line.replace(/[*#_`]/g, '').trim();
+            // Не трогаем годы в начале (от 3 до 4 цифр)
+            c = c.replace(/^(\d{1,2}\.?\d{0,1}|[а-яёА-ЯЁa-zA-Z]\))\s?[-.:]?\s+/, '');
+            c = c.replace(/^(важно|пример|примечание|внимание):\s+/i, '');
+            return c;
+        })
         .filter(line => {
-            const l = line.toLowerCase();
-            return line.length > 4 && 
-                   !l.startsWith('конспект урока') && 
-                   !l.includes('читать параграф') && 
-                   !l.includes('домашнее задание') &&
-                   !l.startsWith('---');
+            const low = line.toLowerCase();
+            if (line.split(/\s+/).length < 6 || line.length < 30) return false;
+            if (trashPatterns.some(p => low.includes(p))) return false;
+            return true;
         });
 
-    // 3. СИСТЕМА ОЦЕНКИ КОНТЕНТА (SCORING)
-    const scoredLines = lines.map((line, index) => {
+    const getStem = (w) => w.toLowerCase().replace(/[^а-яёa-z0-9]/g, '').slice(0, 5);
+    const freq = {};
+    text.toLowerCase().split(/\s+/).forEach(w => {
+        const s = getStem(w);
+        if (s.length > 3) freq[s] = (freq[s] || 0) + 1;
+    });
+
+    const scored = units.map((line, index) => {
         let score = 0;
         const low = line.toLowerCase();
+        
+        line.split(/\s+/).forEach(w => {
+            const s = getStem(w);
+            if (freq[s]) score += freq[s];
+        });
 
-        // А. ПРИОРИТЕТ ЗАГОЛОВКАМ (Это структура)
-        if (line.startsWith('#')) {
-            score += 20;
-            line = line.replace(/^#+\s*/, '📍 ');
-        }
-
-        // Б. ХИМИЯ И НАУКА (Формулы и реакции)
-        if (line.includes('=') || line.includes('→') || low.includes('реакция') || low.includes('свойства:')) {
-            score += 15;
-        }
-
-        // В. ГУМАНИТАРНЫЕ НАУКИ (Даты, определения, правила)
-        if (low.includes(' — это') || low.includes('называется') || low.includes('важно:')) score += 12;
-        if (/\d{4}/.test(line)) score += 8; // Приоритет датам
-        if (low.includes('запятая') || low.includes('союз') || low.includes('правило')) score += 10;
-
-        // Г. БИОЛОГИЯ / ГЕОГРАФИЯ (Роль, значение)
-        if (low.includes('роль') || low.includes('значение') || low.includes('функция')) score += 7;
-
-        // Д. ПЕРВЫЕ СТРОКИ АБЗАЦЕВ
-        if (index < 3) score += 5;
+        if (line.match(/\b\d{4}\b/)) score += 100; // Максимальный приоритет датам
+        if (line.includes(' — ')) score += 80; 
+        if (low.includes('это ') || low.includes('называется')) score += 70;
+        if (low.includes('убийство') || low.includes('манифест') || low.includes('царь')) score += 50;
+        
+        if (low.includes('например')) score -= 30;
+        if (line.endsWith(':')) score -= 40;
 
         return { text: line, score, index };
     });
 
-    // 4. ГРУППИРОВКА И ОТБОР
-    // Берем все заголовки (структуру) + самые важные факты
-    const structure = scoredLines.filter(item => item.text.startsWith('📍'));
-    const facts = scoredLines
-        .filter(item => !item.text.startsWith('📍') && item.score >= 7)
+    // АДАПТИВНЫЙ ПОРОГ: Оставляем только реально важные вещи
+    const avg = scored.reduce((a, b) => a + b.score, 0) / scored.length;
+    
+    // Теперь мы не просто режем до 5, а берем всё, что выше порога, 
+    // но ограничиваем разумным пределом для мобилок (например, 10)
+    const final = scored
+        .filter(item => item.score >= avg * 1.1) 
         .sort((a, b) => b.score - a.score)
-        .slice(0, 8); // Берем топ-8 фактов
-
-    // Объединяем, сортируем по порядку появления в тексте (чтобы не терять логику)
-    const finalSelection = [...structure, ...facts]
+        .slice(0, 10) // Увеличили лимит до 10 для "тяжелых" уроков
         .sort((a, b) => a.index - b.index);
 
-    // 5. ФОРМАТИРОВАНИЕ
-    return [...new Set(finalSelection.map(item => item.text))] // Удаляем дубли
-        .map(s => {
-            let t = s.trim();
-            // Убираем лишние точки в конце, если это заголовок
-            if (t.startsWith('📍')) t = t.replace(/\.+$/, '');
-            // Добавляем точку в конце обычных предложений
-            else if (!t.match(/[.!?]$/) && !t.includes('=')) t += '.';
-            
-            // Если строка не начинается с иконки, добавляем буллит
-            return t.startsWith('📍') ? t : `• ${t}`;
-        })
-        .join('\n\n');
+    // В твоем JS коде внутри summarize измени вывод на этот:
+    return final.map((item, i) => `
+        <div class="summary-item">
+            <span>${getSmartIcon(item.text, i)}</span>
+            <p>${item.text}</p>
+        </div>
+    `).join('');
 },
-openLesson(lesson, pushState = true) {
-    this.dom.lessonContent.innerHTML = marked.parse(lesson.content);
-    
-    const color = this.getSubjectColor(lesson.subject);
-    this.dom.lessonSubject.textContent = lesson.subject;
-    this.dom.lessonSubject.style.backgroundColor = `${color}20`;
-    this.dom.lessonSubject.style.color = color;
-    this.dom.lessonSubject.style.borderColor = color;
-    const mainThought = this.summarize(lesson.content);
 
-        // Вставляем её в контент (перед основным текстом)
+    openLesson(lesson, pushState = true) {
+        const color = this.getSubjectColor(lesson.subject);
+        
+        this.dom.lessonSubject.textContent = lesson.subject;
+        this.dom.lessonSubject.style.backgroundColor = `${color}20`;
+        this.dom.lessonSubject.style.color = color;
+        this.dom.lessonSubject.style.borderColor = color;
+        
+        const mainThought = this.summarize(lesson.content);
+
         this.dom.lessonContent.innerHTML = `
+            ${mainThought ? `
             <div class="ai-summary">
-                <div class="summary-badge">⚡ Суть урока</div>
-                <p class="summary-text">${mainThought}</p>
-            </div>
+                <div class="summary-badge">⚡ Главное за 30 секунд</div>
+                <div class="summary-text">${mainThought}</div>
+            </div>` : ''}
             <div class="markdown-body">
                 ${marked.parse(lesson.content)}
             </div>
         `;
-    this.dom.lessonDate.textContent = new Date(lesson.date).toLocaleDateString('ru-RU', { 
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-    });
+        
+        this.dom.lessonDate.textContent = new Date(lesson.date).toLocaleDateString('ru-RU', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
 
-    if (window.MathJax && window.MathJax.typesetPromise) {
-        MathJax.typesetPromise([this.dom.lessonContent]).catch(console.error);
-    }
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([this.dom.lessonContent]).catch(console.error);
+        }
 
-    this.dom.lessonScene.classList.add('active');
-    document.body.style.overflow = 'hidden';
+        this.dom.lessonScene.classList.add('active');
+        document.body.style.overflow = 'hidden';
 
-    // Обновляем URL
-    if (pushState) {
-        const lessonId = encodeURIComponent(lesson.title);
-        window.history.pushState({ lessonTitle: lesson.title }, '', `?lesson=${lessonId}`);
-    }
-},
+        if (pushState) {
+            const lessonId = encodeURIComponent(lesson.title);
+            window.history.pushState({ lessonTitle: lesson.title }, '', `?lesson=${lessonId}`);
+        }
+    },
 
-closeLesson(pushState = true) {
-    this.dom.lessonScene.classList.remove('active');
-    
-    // Очищаем URL
-    if (pushState) {
-        window.history.pushState({}, '', window.location.pathname);
-    }
+    closeLesson(pushState = true) {
+        this.dom.lessonScene.classList.remove('active');
+        
+        if (pushState) {
+            window.history.pushState({}, '', window.location.pathname);
+        }
 
-    setTimeout(() => {
-        document.body.style.overflow = '';
-        this.dom.lessonContent.innerHTML = ''; 
-    }, 300);
-},
-// Проверка параметров при загрузке
-checkURLParams() {
-    const params = new URLSearchParams(window.location.search);
-    const lessonTitle = params.get('lesson');
-    
-    if (lessonTitle) {
-        const decodedTitle = decodeURIComponent(lessonTitle);
-        const lesson = this.data.find(l => l.title === decodedTitle);
-        if (lesson) {
-            // Небольшая задержка, чтобы данные успели инициализироваться
-            setTimeout(() => this.openLesson(lesson, false), 100);
+        setTimeout(() => {
+            document.body.style.overflow = '';
+            this.dom.lessonContent.innerHTML = ''; 
+        }, 300);
+    },
+
+    checkURLParams() {
+        const params = new URLSearchParams(window.location.search);
+        const lessonTitle = params.get('lesson');
+        
+        if (lessonTitle) {
+            const decodedTitle = decodeURIComponent(lessonTitle);
+            const lesson = this.data.find(l => l.title === decodedTitle);
+            if (lesson) {
+                setTimeout(() => this.openLesson(lesson, false), 100);
+            }
         }
     }
-}
 };
 
 document.addEventListener('DOMContentLoaded', () => app.init());

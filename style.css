@@ -572,3 +572,62 @@ body {
     transform: scale(0.97);
     transition: transform 0.1s;
 }
+/* --- СЕКЦИЯ: ГЛАВНОЕ ЗА 30 СЕКУНД (Compact Edition) --- */
+.summary-container {
+    background: linear-gradient(145deg, rgba(99, 102, 241, 0.05), rgba(0, 0, 0, 0.2));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+#summary-content {
+    display: grid;
+    grid-template-columns: 1fr; /* Мобилки: 1 колонка */
+    gap: 10px;
+}
+
+@media (min-width: 992px) {
+    #summary-content {
+        grid-template-columns: 1fr 1fr; /* ПК: 2 колонки */
+        gap: 15px;
+    }
+}
+
+.summary-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--primary);
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    height: fit-content; /* Чтобы карточки не растягивались */
+}
+
+.summary-item span {
+    font-size: 1.2rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.summary-item p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+}
+
+/* Фикс для очень длинных списков: ограничиваем высоту и добавляем скролл, если их больше 6 */
+#summary-content {
+    max-height: 400px; 
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Красивый скроллбар */
+#summary-content::-webkit-scrollbar { width: 4px; }
+#summary-content::-webkit-scrollbar-track { background: transparent; }
+#summary-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
