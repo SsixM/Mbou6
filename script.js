@@ -310,60 +310,84 @@ render() {
         this.dom.nextBtn.disabled = this.state.currentPage === totalPages;
     },
 summarize(text) {
-        if (!text) return "";
+    if (!text) return "";
 
-        // 1. Очистка от Markdown и фильтрация мусорных строк
-        const cleanText = text.replace(/[#*`-]/g, '').replace(/\[.*\]\(.*\)/g, '');
-        
-        // Разбиваем на предложения и убираем заголовки/инструкции
-        const sentences = cleanText.split(/[.!?\n]\s/)
-            .map(s => s.trim())
-            .filter(s => {
-                const lower = s.toLowerCase();
-                return s.length > 35 && 
-                       !lower.includes("изучить") && 
-                       !lower.includes("параграф") && 
-                       !lower.includes("конспект") && 
-                       !lower.includes("урок");
-            });
+    // 1. УМНАЯ ПРЕДОБРАБОТКА
+    // Сохраняем структуру заголовков и списков, убирая только лишний визуальный мусор
+    let cleanText = text
+        .replace(/!\[.*?\]\(.*?\)/g, '') // Удаляем картинки
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Ссылки заменяем текстом
+        .replace(/(\*\*|__)(.*?)\1/g, '$2') // Убираем жирность, но оставляем текст
+        .replace(/[`]/g, ''); // Убираем символы кода
 
-        if (sentences.length === 0) return "Краткая выжимка недоступна.";
-
-        // 2. Считаем веса слов
-        const wordFreq = {};
-        const words = cleanText.toLowerCase().match(/[а-яёa-z]{4,}/g) || [];
-        words.forEach(word => {
-            wordFreq[word] = (wordFreq[word] || 0) + 1;
+    // 2. РАЗБИВКА ПО СТРОКАМ И ПЕРВИЧНЫЙ ФИЛЬТР
+    const lines = cleanText.split('\n')
+        .map(line => line.trim())
+        .filter(line => {
+            const l = line.toLowerCase();
+            return line.length > 4 && 
+                   !l.startsWith('конспект урока') && 
+                   !l.includes('читать параграф') && 
+                   !l.includes('домашнее задание') &&
+                   !l.startsWith('---');
         });
 
-        // 3. Оцениваем важность каждого предложения
-        const scores = sentences.map(sentence => {
-            let score = 0;
-            const sLower = sentence.toLowerCase();
-            const sWords = sLower.match(/[а-яёa-z]{4,}/g) || [];
+    // 3. СИСТЕМА ОЦЕНКИ КОНТЕНТА (SCORING)
+    const scoredLines = lines.map((line, index) => {
+        let score = 0;
+        const low = line.toLowerCase();
+
+        // А. ПРИОРИТЕТ ЗАГОЛОВКАМ (Это структура)
+        if (line.startsWith('#')) {
+            score += 20;
+            line = line.replace(/^#+\s*/, '📍 ');
+        }
+
+        // Б. ХИМИЯ И НАУКА (Формулы и реакции)
+        if (line.includes('=') || line.includes('→') || low.includes('реакция') || low.includes('свойства:')) {
+            score += 15;
+        }
+
+        // В. ГУМАНИТАРНЫЕ НАУКИ (Даты, определения, правила)
+        if (low.includes(' — это') || low.includes('называется') || low.includes('важно:')) score += 12;
+        if (/\d{4}/.test(line)) score += 8; // Приоритет датам
+        if (low.includes('запятая') || low.includes('союз') || low.includes('правило')) score += 10;
+
+        // Г. БИОЛОГИЯ / ГЕОГРАФИЯ (Роль, значение)
+        if (low.includes('роль') || low.includes('значение') || low.includes('функция')) score += 7;
+
+        // Д. ПЕРВЫЕ СТРОКИ АБЗАЦЕВ
+        if (index < 3) score += 5;
+
+        return { text: line, score, index };
+    });
+
+    // 4. ГРУППИРОВКА И ОТБОР
+    // Берем все заголовки (структуру) + самые важные факты
+    const structure = scoredLines.filter(item => item.text.startsWith('📍'));
+    const facts = scoredLines
+        .filter(item => !item.text.startsWith('📍') && item.score >= 7)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8); // Берем топ-8 фактов
+
+    // Объединяем, сортируем по порядку появления в тексте (чтобы не терять логику)
+    const finalSelection = [...structure, ...facts]
+        .sort((a, b) => a.index - b.index);
+
+    // 5. ФОРМАТИРОВАНИЕ
+    return [...new Set(finalSelection.map(item => item.text))] // Удаляем дубли
+        .map(s => {
+            let t = s.trim();
+            // Убираем лишние точки в конце, если это заголовок
+            if (t.startsWith('📍')) t = t.replace(/\.+$/, '');
+            // Добавляем точку в конце обычных предложений
+            else if (!t.match(/[.!?]$/) && !t.includes('=')) t += '.';
             
-            sWords.forEach(w => {
-                if (wordFreq[w]) score += wordFreq[w];
-            });
-
-            // ПРИОРЕТЕТ: Определения и хим. свойства
-            if (sLower.includes("это")) score *= 2.0;
-            if (sLower.includes("образуется")) score *= 1.5;
-            if (sLower.includes("реакция")) score *= 1.5;
-            if (sLower.includes("свойства")) score *= 1.5;
-            
-            return { sentence, score: score / (sWords.length + 1) };
-        });
-
-        // 4. Выбираем ТОП-4 самых ценных мысли
-        scores.sort((a, b) => b.score - a.score);
-        const bestSentences = scores.slice(0, 4).map(s => s.sentence);
-
-        // 5. Формируем список с переносами строк
-        return bestSentences
-            .map(s => s.charAt(0).toUpperCase() + s.slice(1))
-            .join('\n\n'); // Двойной перенос для красоты
-    },
+            // Если строка не начинается с иконки, добавляем буллит
+            return t.startsWith('📍') ? t : `• ${t}`;
+        })
+        .join('\n\n');
+},
 openLesson(lesson, pushState = true) {
     this.dom.lessonContent.innerHTML = marked.parse(lesson.content);
     
