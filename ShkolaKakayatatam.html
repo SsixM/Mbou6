@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>База Знаний</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' },
+            startup: { typeset: false }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="ambient-light one"></div>
+    <div class="ambient-light two"></div>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo"></div>
+            <div class="nav-controls">
+                <select id="sort-select" class="glass-input">
+                    <option value="newest">Сначала новые</option>
+                    <option value="oldest">Сначала старые</option>
+                </select>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header class="hero fade-in">
+            <h1>Архив уроков</h1>
+            
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Поиск: 'Алгебра', '02.02', 'Векторы'..." autocomplete="off">
+                <div class="search-icon">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+
+            <div class="filters-wrapper">
+                <div class="filters" id="filters-container">
+                    <button class="filter-btn active" data-filter="all">Все</button>
+                    </div>
+            </div>
+        </header>
+
+        <div id="error-msg" class="state-msg error" style="display: none;"></div>
+        
+        <div class="grid" id="lesson-grid"></div>
+
+        <div id="pagination" class="pagination fade-in" style="display: none;">
+            <button id="prev-page" class="nav-btn">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <span id="page-info">1 / 5</span>
+            <button id="next-page" class="nav-btn">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+    </main>
+
+    <div id="scene-lesson" class="modal-overlay">
+        <div class="modal-backdrop" onclick="app.closeLesson()"></div>
+        <div class="modal-window">
+            <div class="modal-header">
+                <button class="close-btn" onclick="app.closeLesson()">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Назад</span>
+                </button>
+                <div class="modal-meta">
+                    <span id="lesson-subject-badge" class="tag">Предмет</span>
+                    <span id="lesson-date-display" class="date">Дата</span>
+                </div>
+            </div>
+            <div class="modal-body custom-scroll">
+                <div id="lesson-content" class="markdown-body"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/compromise"></script>
+    <script src="lessons.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
