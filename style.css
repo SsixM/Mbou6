@@ -414,66 +414,65 @@ body {
         padding: 0.4rem 0.7rem;
     }
 }
-/* --- CLEAN DIARY LAYOUT (MESH STYLE) --- */
-
+/* --- PREMIUM DIARY LAYOUT --- */
 .day-group {
     width: 100%;
-    margin-bottom: 4rem; /* Больше воздуха между днями */
+    margin-bottom: 3.5rem;
     position: relative;
 }
 
 .day-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 20px 0;
+    justify-content: space-between;
+    padding: 16px 24px;
     margin-bottom: 24px;
     
-    /* Фиксируем под шапкой (шапка ~70px) */
+    /* Дорогое стекло (Glassmorphism) */
     position: sticky;
-    top: 68px; 
+    top: 75px; 
     z-index: 10;
-    
-    background: var(--bg-dark);
-    /* Мягкое размытие под заголовком */
-    box-shadow: 0 -10px 20px 10px var(--bg-dark);
+    background: rgba(10, 10, 14, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    transition: all 0.3s ease;
+}
+
+.day-header-info {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
 }
 
 .day-name {
-    font-size: 1.8rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    color: var(--text-main);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #ffffff;
 }
 
 .day-date {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-muted);
-    font-weight: 400;
-}
-
-/* Линия в стиле минимализма */
-.day-header::after {
-    content: '';
-    flex-grow: 1;
-    height: 1px;
-    background: linear-gradient(to right, var(--border), transparent);
+    font-weight: 500;
 }
 
 .day-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
-    padding-top: 10px;
+    padding-top: 5px;
 }
 
-/* Бейдж "Сегодня" — сделаем его аккуратным */
 .day-today {
     background: var(--primary);
     color: white;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    padding: 4px 10px;
+    padding: 6px 12px;
     border-radius: 20px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -481,153 +480,79 @@ body {
 }
 
 @media (max-width: 768px) {
-    .day-header { top: 60px; }
-    .day-name { font-size: 1.4rem; }
+    .day-header {
+        top: 65px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin: 0 -8px 20px -8px; /* Выводим плашку за края на мобилках */
+    }
+    .day-name { font-size: 1.3rem; }
     .day-date { font-size: 0.9rem; }
 }
-/* --- СТИЛЬ ПЛАШКИ ГЛАВНОЙ МЫСЛИ --- */
-.ai-summary {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(219, 39, 119, 0.1));
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--primary);
-    padding: 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
+
+/* --- PREMIUM CONTENT TOGGLE (iOS Style) --- */
+.content-toggle-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    margin-top: 0.5rem;
+}
+
+.content-toggle {
     position: relative;
-    overflow: hidden;
+    display: flex;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    padding: 4px;
+    width: max-content;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
 }
 
-.ai-summary::before {
-    content: '';
+.toggle-slider {
     position: absolute;
-    top: 0; right: 0;
-    width: 100px; height: 100px;
-    background: var(--primary);
-    filter: blur(80px);
-    opacity: 0.1;
-    pointer-events: none;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    background: #ffffff;
+    border-radius: 100px;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    z-index: 1;
+    box-shadow: 0 4px 12px rgba(255,255,255,0.2);
 }
 
-.summary-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--primary);
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-}
-
-.summary-text {
-    font-size: 1.1rem;
-    line-height: 1.5;
-    color: var(--text-main);
-    font-weight: 500;
-    font-style: italic;
-}
-.summary-text {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: var(--text-main);
-    font-weight: 450;
-    /* Убираем курсив, так как текста стало больше, и он должен читаться легко */
-    font-style: normal;
-}
-
-.summary-text::before {
-    content: "●";
-    color: var(--primary);
-    margin-right: 8px;
-    font-size: 0.8rem;
-    display: inline-block;
-    vertical-align: middle;
-}
-.summary-text {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: var(--text-main);
-    font-weight: 450;
-    white-space: pre-line; /* КРИТИЧНО: чтобы работали переносы строк \n */
+.toggle-btn {
     position: relative;
-    padding-left: 20px;
+    z-index: 2;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 10px 24px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 100px;
+    transition: color 0.4s ease;
+    width: 150px; /* Фиксированная ширина для ровного слайдера */
+    text-align: center;
+    letter-spacing: 0.02em;
 }
 
-/* Добавим декоративную линию слева для красоты */
-.summary-text::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 5px;
-    bottom: 5px;
-    width: 2px;
-    background: var(--primary);
-    border-radius: 2px;
-    opacity: 0.5;
-}
-.card:active, .close-btn:active, .ai-summary:active {
-    transform: scale(0.97);
-    transition: transform 0.1s;
-}
-/* --- СЕКЦИЯ: ГЛАВНОЕ ЗА 30 СЕКУНД (Compact Edition) --- */
-.summary-container {
-    background: linear-gradient(145deg, rgba(99, 102, 241, 0.05), rgba(0, 0, 0, 0.2));
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 24px;
+.toggle-btn.active {
+    color: #050507; /* Темный текст на белом ползунке */
 }
 
-#summary-content {
-    display: grid;
-    grid-template-columns: 1fr; /* Мобилки: 1 колонка */
-    gap: 10px;
+/* Анимация контейнера с контентом */
+#markdown-container {
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-@media (min-width: 992px) {
-    #summary-content {
-        grid-template-columns: 1fr 1fr; /* ПК: 2 колонки */
-        gap: 15px;
+@media (max-width: 768px) {
+    .toggle-btn {
+        width: 130px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
     }
 }
-
-.summary-item {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-left: 3px solid var(--primary);
-    padding: 10px 14px;
-    border-radius: 10px;
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    height: fit-content; /* Чтобы карточки не растягивались */
-}
-
-.summary-item span {
-    font-size: 1.2rem;
-    line-height: 1;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-}
-
-.summary-item p {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 400;
-}
-
-/* Фикс для очень длинных списков: ограничиваем высоту и добавляем скролл, если их больше 6 */
-#summary-content {
-    max-height: 400px; 
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-/* Красивый скроллбар */
-#summary-content::-webkit-scrollbar { width: 4px; }
-#summary-content::-webkit-scrollbar-track { background: transparent; }
-#summary-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }

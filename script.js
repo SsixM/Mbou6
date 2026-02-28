@@ -7,6 +7,9 @@ const app = {
         currentPage: 1,
         itemsPerPage: 50
     },
+    // Храним текущий открытый урок и его режим для переключателя
+    currentLesson: null,
+    currentMode: 'full',
 
     init() {
         this.cacheDOM();
@@ -61,14 +64,15 @@ const app = {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') this.closeLesson();
         });
-            window.addEventListener('popstate', (e) => {
-        if (e.state && e.state.lessonTitle) {
-            const lesson = this.data.find(l => l.title === e.state.lessonTitle);
-            if (lesson) this.openLesson(lesson, false);
-        } else {
-            this.closeLesson(false);
-        }
-    });
+        
+        window.addEventListener('popstate', (e) => {
+            if (e.state && e.state.lessonTitle) {
+                const lesson = this.data.find(l => l.title === e.state.lessonTitle);
+                if (lesson) this.openLesson(lesson, false);
+            } else {
+                this.closeLesson(false);
+            }
+        });
     },
 
     initData() {
@@ -137,7 +141,6 @@ const app = {
             'Музыка': '#2dd4bf',
             'Технология': '#71717a',
         };
-
         return map[subject] || '#a8a29e'; 
     },
 
@@ -241,13 +244,15 @@ const app = {
                 if (d.toDateString() === today.toDateString()) {
                     badge = `<span class="day-today">Сегодня</span>`;
                 } else if (d.toDateString() === yesterday.toDateString()) {
-                    badge = `<span class="day-today" style="background: var(--text-muted)">Вчера</span>`;
+                    badge = `<span class="day-today" style="background: var(--text-muted); box-shadow: none;">Вчера</span>`;
                 }
 
                 dayGroup.innerHTML = `
                     <div class="day-header">
-                        <span class="day-name">${dayName}</span>
-                        <span class="day-date">${dayDate}</span>
+                        <div class="day-header-info">
+                            <span class="day-name">${dayName}</span>
+                            <span class="day-date">${dayDate}</span>
+                        </div>
                         ${badge}
                     </div>
                     <div class="day-grid"></div>
@@ -276,98 +281,10 @@ const app = {
         this.dom.nextBtn.disabled = this.state.currentPage === totalPages;
     },
 
-summarize(text) {
-    if (!text || text.length < 100) return "";
-
-    const lowText = text.toLowerCase();
-    let subject = 'general';
-    if (lowText.match(/вектор|координ|парабол|уравнен|функц/)) subject = 'math';
-    else if (lowText.match(/александр|век|реформ|царь|народник|г\.|год/)) subject = 'history';
-    else if (lowText.match(/запятая|союз|придаточ|пунктуац/)) subject = 'lang';
-    else if (lowText.match(/зубы|желудок|орган|кишеч|фермент/)) subject = 'bio';
-
-    const themeIcons = {
-        math: ['📐', '⚙️', '📈', '🔢'],
-        history: ['📜', '📅', '⚔️', '🏛️', '👑'],
-        lang: ['✍️', '🖇️', '📖', '📌'],
-        bio: ['🧬', '🧪', '🩸', '🌿'],
-        general: ['💎', '✨', '💡', '📌']
-    };
-
-    const getSmartIcon = (line, index) => {
-        const set = themeIcons[subject];
-        const low = line.toLowerCase();
-        if (line.match(/\b\d{4}\s?г/)) return subject === 'history' ? '📅' : set[1];
-        if (line.includes(' — ') || low.includes('это ') || low.includes('называется')) return set[0];
-        if (low.includes('если') || low.includes('правило')) return set[1];
-        return set[index % set.length];
-    };
-
-    const trashPatterns = ['домашнее', 'задание', 'выполнить', 'упражнение', 'номер', 'повторить'];
-
-    const units = text.split('\n')
-        .map(line => {
-            let c = line.replace(/[*#_`]/g, '').trim();
-            // Не трогаем годы в начале (от 3 до 4 цифр)
-            c = c.replace(/^(\d{1,2}\.?\d{0,1}|[а-яёА-ЯЁa-zA-Z]\))\s?[-.:]?\s+/, '');
-            c = c.replace(/^(важно|пример|примечание|внимание):\s+/i, '');
-            return c;
-        })
-        .filter(line => {
-            const low = line.toLowerCase();
-            if (line.split(/\s+/).length < 6 || line.length < 30) return false;
-            if (trashPatterns.some(p => low.includes(p))) return false;
-            return true;
-        });
-
-    const getStem = (w) => w.toLowerCase().replace(/[^а-яёa-z0-9]/g, '').slice(0, 5);
-    const freq = {};
-    text.toLowerCase().split(/\s+/).forEach(w => {
-        const s = getStem(w);
-        if (s.length > 3) freq[s] = (freq[s] || 0) + 1;
-    });
-
-    const scored = units.map((line, index) => {
-        let score = 0;
-        const low = line.toLowerCase();
-        
-        line.split(/\s+/).forEach(w => {
-            const s = getStem(w);
-            if (freq[s]) score += freq[s];
-        });
-
-        if (line.match(/\b\d{4}\b/)) score += 100; // Максимальный приоритет датам
-        if (line.includes(' — ')) score += 80; 
-        if (low.includes('это ') || low.includes('называется')) score += 70;
-        if (low.includes('убийство') || low.includes('манифест') || low.includes('царь')) score += 50;
-        
-        if (low.includes('например')) score -= 30;
-        if (line.endsWith(':')) score -= 40;
-
-        return { text: line, score, index };
-    });
-
-    // АДАПТИВНЫЙ ПОРОГ: Оставляем только реально важные вещи
-    const avg = scored.reduce((a, b) => a + b.score, 0) / scored.length;
-    
-    // Теперь мы не просто режем до 5, а берем всё, что выше порога, 
-    // но ограничиваем разумным пределом для мобилок (например, 10)
-    const final = scored
-        .filter(item => item.score >= avg * 1.1) 
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10) // Увеличили лимит до 10 для "тяжелых" уроков
-        .sort((a, b) => a.index - b.index);
-
-    // В твоем JS коде внутри summarize измени вывод на этот:
-    return final.map((item, i) => `
-        <div class="summary-item">
-            <span>${getSmartIcon(item.text, i)}</span>
-            <p>${item.text}</p>
-        </div>
-    `).join('');
-},
-
     openLesson(lesson, pushState = true) {
+        this.currentLesson = lesson;
+        this.currentMode = 'full';
+
         const color = this.getSubjectColor(lesson.subject);
         
         this.dom.lessonSubject.textContent = lesson.subject;
@@ -375,22 +292,30 @@ summarize(text) {
         this.dom.lessonSubject.style.color = color;
         this.dom.lessonSubject.style.borderColor = color;
         
-        const mainThought = this.summarize(lesson.content);
-
-        this.dom.lessonContent.innerHTML = `
-            ${mainThought ? `
-            <div class="ai-summary">
-                <div class="summary-badge">⚡ Главное за 30 секунд</div>
-                <div class="summary-text">${mainThought}</div>
-            </div>` : ''}
-            <div class="markdown-body">
-                ${marked.parse(lesson.content)}
-            </div>
-        `;
-        
         this.dom.lessonDate.textContent = new Date(lesson.date).toLocaleDateString('ru-RU', { 
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
         });
+
+        // Формируем красивый переключатель, только если есть content_tiny
+        let toggleHTML = '';
+        if (lesson.content_tiny) {
+            toggleHTML = `
+                <div class="content-toggle-wrapper fade-in">
+                    <div class="content-toggle">
+                        <div class="toggle-slider"></div>
+                        <button class="toggle-btn active" data-mode="full" onclick="app.switchContentMode('full')">Подробно</button>
+                        <button class="toggle-btn" data-mode="tiny" onclick="app.switchContentMode('tiny')">Кратко</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        this.dom.lessonContent.innerHTML = `
+            ${toggleHTML}
+            <div id="markdown-container" class="markdown-body">
+                ${marked.parse(lesson.content)}
+            </div>
+        `;
 
         if (window.MathJax && window.MathJax.typesetPromise) {
             MathJax.typesetPromise([this.dom.lessonContent]).catch(console.error);
@@ -403,6 +328,43 @@ summarize(text) {
             const lessonId = encodeURIComponent(lesson.title);
             window.history.pushState({ lessonTitle: lesson.title }, '', `?lesson=${lessonId}`);
         }
+    },
+
+    // Метод переключения (с анимацией)
+    switchContentMode(mode) {
+        if (!this.currentLesson || this.currentMode === mode) return;
+        this.currentMode = mode;
+        
+        const content = mode === 'tiny' ? this.currentLesson.content_tiny : this.currentLesson.content;
+        const container = document.getElementById('markdown-container');
+        
+        // Анимация исчезновения
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(5px)';
+        
+        // Обновление UI кнопок
+        const btns = document.querySelectorAll('.toggle-btn');
+        const slider = document.querySelector('.toggle-slider');
+        
+        btns.forEach(b => b.classList.remove('active'));
+        const activeBtn = document.querySelector(`.toggle-btn[data-mode="${mode}"]`);
+        activeBtn.classList.add('active');
+        
+        if (mode === 'tiny') {
+            slider.style.transform = 'translateX(100%)';
+        } else {
+            slider.style.transform = 'translateX(0)';
+        }
+
+        // Рендер нового текста с задержкой под анимацию
+        setTimeout(() => {
+            container.innerHTML = marked.parse(content);
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([container]).catch(console.error);
+            }
+            container.style.opacity = '1';
+            container.style.transform = 'translateY(0)';
+        }, 200);
     },
 
     closeLesson(pushState = true) {
