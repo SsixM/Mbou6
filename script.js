@@ -10,12 +10,143 @@ const app = {
     // Храним текущий открытый урок и его режим для переключателя
     currentLesson: null,
     currentMode: 'full',
+    quizState: {
+        active: false,
+        questions: [],
+        currentIndex: 0,
+        score: 0
+    },
+    // Вызови эту функцию один раз внутри твоего метода init()
+    initQuizDOMAndEvents() {
+        this.dom.startQuizBtn = document.getElementById('start-quiz-btn');
+        this.dom.quizScene = document.getElementById('scene-quiz');
+        this.dom.quizContent = document.getElementById('quiz-content');
 
+        if (this.dom.startQuizBtn) {
+            this.dom.startQuizBtn.addEventListener('click', () => {
+                this.startQuiz();
+            });
+        }
+    },
+
+    // Вызови эту функцию внутри твоего метода openLesson(lesson), передав в нее урок
+    setupLessonQuiz(lesson) {
+        if (lesson.quiz && Array.isArray(lesson.quiz) && lesson.quiz.length > 0) {
+            this.dom.startQuizBtn.style.display = 'block';
+            this.quizState.questions = lesson.quiz;
+        } else {
+            this.dom.startQuizBtn.style.display = 'none';
+            this.quizState.questions = [];
+        }
+    },
+
+    startQuiz() {
+        this.quizState.active = true;
+        this.quizState.currentIndex = 0;
+        this.quizState.score = 0;
+        
+        this.dom.quizScene.classList.add('active');
+        this.renderQuizQuestion();
+    },
+
+    renderQuizQuestion() {
+        const qIndex = this.quizState.currentIndex;
+        const qData = this.quizState.questions[qIndex];
+        const total = this.quizState.questions.length;
+
+        let optionsHtml = '';
+        for (let i = 0; i < qData.options.length; i++) {
+            optionsHtml += `
+                <button class="quiz-option" onclick="app.checkQuizAnswer(${i}, this)">
+                    ${qData.options[i]}
+                </button>
+            `;
+        }
+
+        const html = `
+            <div class="quiz-progress">Вопрос ${qIndex + 1} из ${total}</div>
+            <div class="quiz-question">${qData.question}</div>
+            <div class="quiz-options">
+                ${optionsHtml}
+            </div>
+        `;
+        
+        this.dom.quizContent.style.opacity = '0';
+        
+        setTimeout(() => {
+            this.dom.quizContent.innerHTML = html;
+            this.dom.quizContent.style.opacity = '1';
+        }, 150);
+    },
+
+    checkQuizAnswer(selectedIndex, btnElement) {
+        const qData = this.quizState.questions[this.quizState.currentIndex];
+        const isCorrect = (selectedIndex === qData.correct);
+        const options = this.dom.quizContent.querySelectorAll('.quiz-option');
+
+        for (let i = 0; i < options.length; i++) {
+            options[i].disabled = true;
+        }
+
+        if (isCorrect) {
+            btnElement.classList.add('correct');
+            this.quizState.score += 1;
+        } else {
+            btnElement.classList.add('wrong');
+            options[qData.correct].classList.add('correct');
+        }
+
+        setTimeout(() => {
+            this.quizState.currentIndex += 1;
+            
+            if (this.quizState.currentIndex < this.quizState.questions.length) {
+                this.renderQuizQuestion();
+            } else {
+                this.showQuizResults();
+            }
+        }, 1500);
+    },
+
+    showQuizResults() {
+        const total = this.quizState.questions.length;
+        const score = this.quizState.score;
+        const percent = Math.round((score / total) * 100);
+        
+        let message = "Отличная работа! Тема усвоена.";
+        if (percent < 50) {
+            message = "Стоит еще раз перечитать материал урока.";
+        } else if (percent < 100) {
+            message = "Хороший результат, но есть куда расти.";
+        }
+
+        const html = `
+            <div class="quiz-result-screen">
+                <div class="quiz-result-score">${score} / ${total}</div>
+                <div class="quiz-result-text">${message}</div>
+                <button class="toggle-btn active" style="padding: 12px 32px; width: auto; border: none; border-radius: 8px; cursor: pointer; background: var(--primary); color: white;" onclick="app.closeQuiz()">
+                    Вернуться к уроку
+                </button>
+            </div>
+        `;
+
+        this.dom.quizContent.innerHTML = html;
+    },
+
+    closeQuiz() {
+        this.quizState.active = false;
+        this.dom.quizScene.classList.remove('active');
+        
+        setTimeout(() => {
+            this.dom.quizContent.innerHTML = '';
+        }, 300);
+    },
     init() {
         this.cacheDOM();
         this.bindEvents();
         this.initData();
         this.checkURLParams();
+        this.initQuizDOMAndEvents();
+
     },
 
     cacheDOM() {
@@ -32,7 +163,10 @@ const app = {
             lessonScene: document.getElementById('scene-lesson'),
             lessonContent: document.getElementById('lesson-content'),
             lessonSubject: document.getElementById('lesson-subject-badge'),
-            lessonDate: document.getElementById('lesson-date-display')
+            lessonDate: document.getElementById('lesson-date-display'),
+            startQuizBtn: document.getElementById('start-quiz-btn'),
+            quizScene: document.getElementById('scene-quiz'),
+            quizContent: document.getElementById('quiz-content')
         };
     },
 
@@ -41,6 +175,7 @@ const app = {
             this.state.search = e.target.value.toLowerCase().trim();
             this.state.currentPage = 1;
             this.animateGridUpdate();
+            this.dom.startQuizBtn.addEventListener('click', () => this.startQuiz());
         });
 
         this.dom.sortSelect.addEventListener('change', (e) => {
@@ -284,7 +419,7 @@ const app = {
     openLesson(lesson, pushState = true) {
         this.currentLesson = lesson;
         this.currentMode = 'full';
-
+        this.setupLessonQuiz(lesson);
         const color = this.getSubjectColor(lesson.subject);
         
         this.dom.lessonSubject.textContent = lesson.subject;
