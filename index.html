@@ -3,31 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>База Знаний</title>
+    <title>Архив Уроков | База Знаний</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- ПРОДВИНУТАЯ НАСТРОЙКА MATHJAX (КАК В CHATGPT) -->
     <script>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true, // Позволяет писать \$ для обычного знака доллара
+                processEnvironments: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
             svg: { fontCache: 'global' },
             startup: { typeset: false }
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Парсер Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Подсветка синтаксиса кода (Highlight.js) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
+    <!-- Стили Markdown и кастомные -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- Фоновый эмбиент -->
     <div class="ambient-light one"></div>
     <div class="ambient-light two"></div>
 
+    <!-- Навигация -->
     <nav class="navbar">
         <div class="nav-content">
-            <div class="logo"></div>
+            <div class="logo"><span></span></div>
             <div class="nav-controls">
                 <select id="sort-select" class="glass-input">
                     <option value="newest">Сначала новые</option>
@@ -37,9 +57,11 @@
         </div>
     </nav>
 
+    <!-- Главный контейнер -->
     <main class="container">
         <header class="hero fade-in">
-            <h1>Архив уроков</h1>
+            <h1>База знаний</h1>
+            <p>Умный поиск по всем конспектам, формулам и лекциям</p>
             
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="Поиск: 'Алгебра', '02.02', 'Векторы'..." autocomplete="off">
@@ -50,8 +72,8 @@
 
             <div class="filters-wrapper">
                 <div class="filters" id="filters-container">
-                    <button class="filter-btn active" data-filter="all">Все</button>
-                    </div>
+                    <button class="filter-btn active" data-filter="all">Все предметы</button>
+                </div>
             </div>
         </header>
 
@@ -70,6 +92,7 @@
         </div>
     </main>
 
+    <!-- Модальное окно: Урок -->
     <div id="scene-lesson" class="modal-overlay">
         <div class="modal-backdrop" onclick="app.closeLesson()"></div>
         <div class="modal-window">
@@ -78,38 +101,41 @@
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     <span>Назад</span>
                 </button>
-                <div class="modal-meta" style="display: flex; gap: 10px; align-items: center;">
+                <div class="modal-meta">
                     <span id="lesson-subject-badge" class="tag">Предмет</span>
                     <span id="lesson-date-display" class="date">Дата</span>
-                    <button id="start-quiz-btn" class="nav-btn" style="display: none; background: var(--primary); padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; border: none; color: white; cursor: pointer;">
+                    <button id="start-quiz-btn" class="action-btn" style="display: none;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Пройти тест
                     </button>
                 </div>
-
-                <div id="scene-quiz" class="modal-overlay">
-                    <div class="modal-backdrop" onclick="app.closeQuiz()"></div>
-                    <div class="modal-window" style="max-width: 600px;">
-                        <div class="modal-header">
-                            <button class="close-btn" onclick="app.closeQuiz()">
-                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                                <span>Завершить</span>
-                            </button>
-                            <div class="modal-meta">
-                                <span class="tag" style="background: rgba(99, 102, 241, 0.2); color: var(--primary);">Проверка знаний</span>
-                            </div>
-                        </div>
-                        <div class="modal-body custom-scroll" id="quiz-content" style="padding: 2rem;">
-                            </div>
-                    </div>
-                </div>
             </div>
             <div class="modal-body custom-scroll">
-                <div id="lesson-content" class="markdown-body"></div>
+                <!-- Класс tex2jax_process говорит MathJax, что здесь нужно искать формулы -->
+                <div id="lesson-content" class="markdown-body tex2jax_process"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Квиз -->
+    <div id="scene-quiz" class="modal-overlay">
+        <div class="modal-backdrop" onclick="app.closeQuiz()"></div>
+        <div class="modal-window quiz-window">
+            <div class="modal-header">
+                <button class="close-btn" onclick="app.closeQuiz()">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Завершить тест</span>
+                </button>
+                <div class="modal-meta">
+                    <span class="tag quiz-tag">Проверка знаний</span>
+                </div>
+            </div>
+            <div class="modal-body custom-scroll tex2jax_process" id="quiz-content">
+                <!-- Контент квиза -->
             </div>
         </div>
     </div>
     
-    <script src="https://unpkg.com/compromise"></script>
     <script src="lessons.js"></script>
     <script src="script.js"></script>
 </body>
