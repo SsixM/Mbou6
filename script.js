@@ -70,23 +70,22 @@ const app = {
         });
     },
 
-    // === ЖЕЛЕЗОБЕТОННЫЙ ПАРСЕР ФОРМУЛ ===
     parseMarkdownAndMath(rawText) {
         if (!rawText) return '';
         
         const mathBlocks = [];
         
-        // Шаг 1: Прячем формулы ($$...$$ и $...$). 
-        // Используем плейсхолдер БЕЗ подчеркиваний и звездочек, чтобы Markdown его не сломал!
-        let processedText = rawText.replace(/(\$\$[\s\S]*?\$\$|\$[^$\n]+?\$)/g, (match) => {
+        // Шаг 1: Прячем абсолютно все виды формул ($$...$$, $...$, \[...\], \(...\)) от Markdown-парсера.
+        // Это гарантирует, что нижние подчеркивания (_), звездочки и стрелочки (вроде \xrightarrow) не сломаются.
+        let processedText = rawText.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\$[^$\n]+?\$)/g, (match) => {
             mathBlocks.push(match);
             return `MATHPLACEHOLDER${mathBlocks.length - 1}QWERT`;
         });
 
-        // Шаг 2: Парсим безопасный текст в Markdown
+        // Шаг 2: Парсим безопасный текст в Markdown (шрифты, жирность, списки)
         let html = marked.parse(processedText);
 
-        // Шаг 3: Возвращаем формулы на их места
+        // Шаг 3: Возвращаем нетронутые формулы на их законные места, чтобы MathJax мог их отрендерить
         mathBlocks.forEach((block, index) => {
             html = html.replace(`MATHPLACEHOLDER${index}QWERT`, block);
         });
